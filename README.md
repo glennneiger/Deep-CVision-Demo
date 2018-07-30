@@ -1,6 +1,6 @@
 # Deep-CVision-Demo
 Preservation of a fullstack demo for deep learning through mobile computer vision, processed in the cloud.<br><br>
-I made this in the summer of 2017 as a live demonstration for a deep learning presentation.<br>
+I made this in the summer of 2017 as a live demonstration to be used in a deep learning presentation.<br>
 The stack consisted of a modified **darknet/yolo v2** backend that streamed video through **ffmpeg**.<br>
 A **nginx** webfront served **javascript** and **html** and used a **websocket service** written in **go** that coordinated the streaming.<br>
 The input came from a **live video streaming** service called **bambuser**.<br>
