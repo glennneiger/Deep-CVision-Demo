@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <pthread.h>
+#include <stdint.h>
 
 #define SECRET_NUM -1234
 extern int gpu_index;
@@ -631,6 +632,7 @@ void rescale_weights(layer l, float scale, float trans);
 void rgbgr_weights(layer l);
 image *get_weights(layer l);
 
+void tndemo(char *cfgfile, char *weightfile, float thresh, int cam_index, const char *filename, char **names, int classes, int frame_skip, char *prefix, int avg, float hier_thresh, int w, int h, int fps, int fullscreen, int png);
 void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const char *filename, char **names, int classes, int frame_skip, char *prefix, int avg, float hier_thresh, int w, int h, int fps, int fullscreen);
 void get_detection_boxes(layer l, int w, int h, float thresh, float **probs, box *boxes, int only_objectness);
 
@@ -688,7 +690,10 @@ void do_nms(box *boxes, float **probs, int total, int classes, float thresh);
 data load_all_cifar10();
 box_label *read_boxes(char *filename, int *n);
 box float_to_box(float *f, int stride);
+
+//void draw_detections(image im, int num, float thresh, box *boxes, float **probs, char **names, image **labels, int classes);
 void draw_detections(image im, int num, float thresh, box *boxes, float **probs, float **masks, char **names, image **alphabet, int classes);
+void draw_json_detections(image im, int num, float thresh, box *boxes, float **probs, char **names, image **labels, int classes, uint8_t *buffer, int fps, int want_png);
 
 matrix network_predict_data(network net, data test);
 image **load_alphabet();
