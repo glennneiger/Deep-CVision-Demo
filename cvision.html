@@ -1,0 +1,26 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title>Lewans Coputer Vision Lab</title>
+	<link rel="stylesheet" type="text/css" href="cvision.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="cvision.js"></script>
+</head>
+<body>
+	<div id="fullscreen">Deep Learning</div>
+	<!-- 964 x 544,  960 x 540 -->
+	<div id="myiframediv" style="position:fixed"><iframe id="myiframe" width="724" height="408" frameborder="0" allowfullscreen></iframe></div>
+	<img id="tnlogo" src='https://www.telenor.rs/static/images/1/38/438/438_d.png'></img>
+	<table>
+		<tr>
+			
+			<td><canvas id="stream" width="480" height="270" style="width:720px;height:405px"></canvas><br></td>
+			<td><button onclick="javascript:myWebsocketStart()">Computer Vision Demo</button>
+				<div id="info">Not Streaming</div></td>
+			<!-- td id="iframediv"><iframe id="frame1" width="480" height="270" allowfullscreen frameborder="0"></iframe></td -->
+		</tr>
+	</table>
+	<br>
+	<div id="canvcont"></div>
+</body>
+</html>

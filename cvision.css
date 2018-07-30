@@ -1,0 +1,105 @@
+
+body {
+	background-color: #000000;
+	overflow: hidden;
+}
+
+#tnlogo {
+	position: absolute;
+	pointer-events: none;
+	background: none;
+	opacity: 0.0;
+	width: 130%;
+	height: 100%;
+}
+
+#fullscreen {
+	position: fixed;
+	padding: 0;
+	margin: 0;
+
+	top: 0;
+	left: 0;
+
+	width: 100%;
+	height: 100%;
+
+	opacity: 8.0;
+
+	font-size: 100px;
+	text-align: center;
+	vertical-align: middle;
+
+	text-shadow: 0px 0px 20px #000000;
+
+	color: white;
+
+	pointer-events: none;
+}
+
+#myiframediv {
+	pointer-events: none;
+	display: none; 
+}
+#myiframe {
+	pointer-events: none;
+}
+
+#iframediv {
+	border: 1px solid red;
+}
+
+#stream {
+	border: 1px solid blue;
+}
+
+button:active {
+	border: 2px solid green;
+}
+
+#canvcont {
+	position: relative;
+	border: 1px solid green;
+}
+
+#info {
+	font-family:verdana;
+	font-size:10px;
+	color: white;
+}
+
+.canvcont {
+	float: left;
+	overflow: hidden;
+	margin: 10px 10px 10px 10px;
+	/*display:table;*/
+}
+
+
+.canvcap {
+	position: relative;
+	z-index: 0;
+	font-family:verdana;
+	font-size:20px;
+	color: white;
+	text-shadow: 0px 0px 5px #000000;
+	/*
+	display:table-cell;
+	vertical-align:middle;
+	*/
+}
+
+.primitiv {
+	position: absolute;
+	width: 100px;
+	height: 100px;
+	z-index: 10;
+}
+
+canvas {
+	z-index: -1;
+	/*
+	display:table-cell;
+	vertical-align:middle;	
+	*/
+}
