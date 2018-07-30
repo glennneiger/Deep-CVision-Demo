@@ -10,9 +10,13 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+
 int windows = 0;
 
 float colors[6][3] = { {1,0,1}, {0,0,1},{0,1,1},{0,1,0},{1,1,0},{1,0,0} };
+
+static const unsigned char base64_table[65] =
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 float get_color(int c, int x, int max)
 {
@@ -24,6 +28,248 @@ float get_color(int c, int x, int max)
     //printf("%f\n", r);
     return r;
 }
+
+unsigned char * base64_encode_jpg(const char *name, size_t *out_len)
+{
+	unsigned char *out, *pos;
+	const unsigned char *end, *in;
+	size_t olen;
+	int line_len;
+
+	unsigned char *source = NULL;
+	size_t newLen = 0;
+	FILE *fp = fopen(name, "r");
+	if (fp != NULL) {
+		/* Go to the end of the file. */
+		if (fseek(fp, 0L, SEEK_END) == 0) {
+			/* Get the size of the file. */
+			long bufsize = ftell(fp);
+			if (bufsize == -1) { /* Error */ }
+
+			/* Allocate our buffer to that size. */
+			source = calloc((bufsize + 1), sizeof(char));
+
+			/* Go back to the start of the file. */
+			if (fseek(fp, 0L, SEEK_SET) != 0) { /* Handle error here */ }
+
+			/* Read the entire file into memory. */
+			newLen = fread(source, sizeof(char), bufsize, fp);
+			if (newLen == 0) {
+				fputs("Error reading file", stderr);
+			} else {
+				//source[++newLen] = '\0'; /* Just to be safe. */
+			}
+		}
+		fclose(fp);
+	}
+
+	int w = 480;
+	int h = 270;
+	int c = 3;
+	int len = newLen;
+	//stbi_write_png(char const *filename, int x, int y, int comp, const void *data, int stride_bytes)
+	//stbi_write_png_to_mem((unsigned char *) data, stride_bytes, x, y, comp, &len);
+    	//int success = stbi_write_png(buff, im.w, im.h, im.c, data, im.w*im.c);
+	
+
+	olen = len * 4 / 3 + 4; /* 3-byte blocks to 4-byte */
+	olen += olen / 72; /* line feeds */
+	olen++; /* nul termination */
+	if (olen < len)
+		return NULL; /* integer overflow */
+	//out = os_malloc(olen);
+	out = calloc(olen ,sizeof(char));
+	if (out == NULL)
+		return NULL;
+
+	end = source + len;
+	in = source;
+	pos = out;
+	line_len = 0;
+	while (end - in >= 3) {
+		*pos++ = base64_table[in[0] >> 2];
+		*pos++ = base64_table[((in[0] & 0x03) << 4) | (in[1] >> 4)];
+		*pos++ = base64_table[((in[1] & 0x0f) << 2) | (in[2] >> 6)];
+		*pos++ = base64_table[in[2] & 0x3f];
+		in += 3;
+		line_len += 4;
+		if (line_len >= 72) {
+			//*pos++ = '\n';
+			line_len = 0;
+		}
+	}
+
+	if (end - in) {
+		*pos++ = base64_table[in[0] >> 2];
+		if (end - in == 1) {
+			*pos++ = base64_table[(in[0] & 0x03) << 4];
+			*pos++ = '=';
+		} else {
+			*pos++ = base64_table[((in[0] & 0x03) << 4) |
+					      (in[1] >> 4)];
+			*pos++ = base64_table[(in[1] & 0x0f) << 2];
+		}
+		*pos++ = '=';
+		line_len += 4;
+	}
+
+	/*
+	if (line_len)
+		*pos++ = '\n';
+		*/
+
+	*pos++ = '\0';
+	if (out_len)
+		*out_len = pos - out;
+	free(out);
+	free(source);
+	return out;
+}
+
+
+unsigned char * base64_encode_rawimage(uint8_t *src, size_t *out_len)
+{
+	unsigned char *out, *pos;
+	const unsigned char *end, *in;
+	size_t olen;
+	int line_len;
+
+	int w = 480;
+	int h = 270;
+	int c = 3;
+	int len = w*h*c;
+	//stbi_write_png(char const *filename, int x, int y, int comp, const void *data, int stride_bytes)
+	//stbi_write_png_to_mem((unsigned char *) data, stride_bytes, x, y, comp, &len);
+    	//int success = stbi_write_png(buff, im.w, im.h, im.c, data, im.w*im.c);
+	
+	unsigned char *png = stbi_write_png_to_mem((unsigned char *) src, w*c, w, h, c, &len);
+
+	olen = len * 4 / 3 + 4; /* 3-byte blocks to 4-byte */
+	olen += olen / 72; /* line feeds */
+	olen++; /* nul termination */
+	if (olen < len)
+		return NULL; /* integer overflow */
+	//out = os_malloc(olen);
+	out = calloc(olen ,sizeof(char));
+	if (out == NULL)
+		return NULL;
+
+	end = png + len;
+	in = png;
+	pos = out;
+	line_len = 0;
+	while (end - in >= 3) {
+		*pos++ = base64_table[in[0] >> 2];
+		*pos++ = base64_table[((in[0] & 0x03) << 4) | (in[1] >> 4)];
+		*pos++ = base64_table[((in[1] & 0x0f) << 2) | (in[2] >> 6)];
+		*pos++ = base64_table[in[2] & 0x3f];
+		in += 3;
+		line_len += 4;
+		if (line_len >= 72) {
+			//*pos++ = '\n';
+			line_len = 0;
+		}
+	}
+
+	if (end - in) {
+		*pos++ = base64_table[in[0] >> 2];
+		if (end - in == 1) {
+			*pos++ = base64_table[(in[0] & 0x03) << 4];
+			*pos++ = '=';
+		} else {
+			*pos++ = base64_table[((in[0] & 0x03) << 4) |
+					      (in[1] >> 4)];
+			*pos++ = base64_table[(in[1] & 0x0f) << 2];
+		}
+		*pos++ = '=';
+		line_len += 4;
+	}
+
+	if (line_len)
+		*pos++ = '\n';
+
+	*pos = '\0';
+	if (out_len)
+		*out_len = pos - out;
+	STBIW_FREE(png);
+	free(out);
+	return out;
+}
+
+unsigned char * base64_encode_image(image im, size_t *out_len)
+{
+	unsigned char *out, *pos;
+	const unsigned char *end, *in;
+	size_t olen;
+	int line_len;
+
+	int len = im.w*im.h*im.c;
+	unsigned char *src = calloc(len ,sizeof(char));
+	int i,k;
+	for(k = 0; k < im.c; ++k){
+		for(i = 0; i < im.w*im.h; ++i){
+			src[i*im.c+k] = (unsigned char) (255*im.data[i + k*im.w*im.h]);
+		}
+	}
+	//stbi_write_png(char const *filename, int x, int y, int comp, const void *data, int stride_bytes)
+	//stbi_write_png_to_mem((unsigned char *) data, stride_bytes, x, y, comp, &len);
+    	//int success = stbi_write_png(buff, im.w, im.h, im.c, data, im.w*im.c);
+	
+	unsigned char *png = stbi_write_png_to_mem((unsigned char *) src, im.w*im.c, im.w, im.h, im.c, &len);
+
+	olen = len * 4 / 3 + 4; /* 3-byte blocks to 4-byte */
+	olen += olen / 72; /* line feeds */
+	olen++; /* nul termination */
+	if (olen < len)
+		return NULL; /* integer overflow */
+	//out = os_malloc(olen);
+	out = calloc(olen ,sizeof(char));
+	if (out == NULL)
+		return NULL;
+
+	end = png + len;
+	in = png;
+	pos = out;
+	line_len = 0;
+	while (end - in >= 3) {
+		*pos++ = base64_table[in[0] >> 2];
+		*pos++ = base64_table[((in[0] & 0x03) << 4) | (in[1] >> 4)];
+		*pos++ = base64_table[((in[1] & 0x0f) << 2) | (in[2] >> 6)];
+		*pos++ = base64_table[in[2] & 0x3f];
+		in += 3;
+		line_len += 4;
+		if (line_len >= 72) {
+			//*pos++ = '\n';
+			line_len = 0;
+		}
+	}
+
+	if (end - in) {
+		*pos++ = base64_table[in[0] >> 2];
+		if (end - in == 1) {
+			*pos++ = base64_table[(in[0] & 0x03) << 4];
+			*pos++ = '=';
+		} else {
+			*pos++ = base64_table[((in[0] & 0x03) << 4) |
+					      (in[1] >> 4)];
+			*pos++ = base64_table[(in[1] & 0x0f) << 2];
+		}
+		*pos++ = '=';
+		line_len += 4;
+	}
+
+	if (line_len)
+		*pos++ = '\n';
+
+	*pos = '\0';
+	if (out_len)
+		*out_len = pos - out;
+	STBIW_FREE(png);
+	free(src);
+	free(out);
+	return out;
+}
+
 
 image mask_to_rgb(image mask)
 {
@@ -188,6 +434,109 @@ image **load_alphabet()
         }
     }
     return alphabets;
+}
+
+void draw_json_detections(image im, int num, float thresh, box *boxes, float **probs, char **names, image **alphabet, int classes, uint8_t *buffer, int fps, int want_png)
+{
+    int i;
+
+   // image.data
+
+	size_t * olen;
+	if(want_png)
+	{
+    	printf("{\"image\":\"%s\",",base64_encode_rawimage(buffer,olen));
+    	//printf("{\"image\":\"broken\","); //,base64_encode_rawimage(buffer,olen));
+	}
+	else
+	{
+		save_raw_jpg(buffer,"/dev/shm/image");
+		printf("{\"image\":\"%s\",",base64_encode_jpg("/dev/shm/image.jpg",olen));
+	}
+	printf("\"fps\":%d,",fps);
+    printf("\"meta\":[");
+    int itemcnt = 0;
+    int count = 0;
+
+    for(i = 0; i < num; ++i){
+        int class = max_index(probs[i], classes);
+        float prob = probs[i][class];
+        if(prob > thresh){
+			itemcnt++;
+		}
+    }
+    for(i = 0; i < num; ++i){
+        int class = max_index(probs[i], classes);
+        float prob = probs[i][class];
+		//printf("\n(%d) prob: %f, thresh: %f\n",i, prob, thresh);
+        if(prob > thresh){
+
+            int width = im.h * .012;
+
+            if(0){
+                width = pow(prob, 1./2.)*10+1;
+                alphabet = 0;
+            }
+
+            //printf("%d %s: %.0f%%\n", i, names[class], prob*100);
+            //printf("%s: %.0f%%\n", names[class], prob*100);
+	    
+            int offset = class*123457 % classes;
+            float red = get_color(2,offset,classes);
+            float green = get_color(1,offset,classes);
+            float blue = get_color(0,offset,classes);
+            float rgb[3];
+
+            //width = prob*20+2;
+
+            rgb[0] = red;
+            rgb[1] = green;
+            rgb[2] = blue;
+            box b = boxes[i];
+
+
+            int left  = (b.x-b.w/2.)*im.w;
+            int right = (b.x+b.w/2.)*im.w;
+            int top   = (b.y-b.h/2.)*im.h;
+            int bot   = (b.y+b.h/2.)*im.h;
+
+	    int box_width = right - left;
+	    int box_height = bot - top;
+		
+
+            if(left < 0) left = 0;
+            if(right > im.w-1) right = im.w-1;
+            if(top < 0) top = 0;
+            if(bot > im.h-1) bot = im.h-1;
+
+	    unsigned char cred = (unsigned char) (255*red);
+	    unsigned char cgreen = (unsigned char) (255*green);
+	    unsigned char cblue = (unsigned char) (255*blue);
+	    //printf("{\"class\":\"%s\",\"prob\":\"%.0f%%\",\"color\":\"#%x%x%x\",\"box\":[%d,%d,%d,%d]}",names[class], prob*100, cred, cgreen, cblue, left, top, bot, right);
+	    printf("{\"class\":\"%s\",\"box\":[%d,%d,%d,%d],\"color\":\"#%02x%02x%02x\",\"pred\":\"%.0f%%\"}",
+		names[class],
+		left,top,box_width,box_height,
+		cred,cgreen,cblue,
+		prob*100
+	    );
+	    if(++count < itemcnt )
+	    {
+	        printf(",");
+        }
+
+		if(0)
+		{
+            draw_box_width(im, left, top, right, bot, width, red, green, blue);
+            if (alphabet) {
+                image label = get_label(alphabet, names[class], (im.h*.03)/10);
+                draw_label(im, top + width, left, label, rgb);
+                free_image(label);
+            }
+		}
+        }
+    }
+    printf("]}\n");
+    fflush(stdout);
 }
 
 void draw_detections(image im, int num, float thresh, box *boxes, float **probs, float **masks, char **names, image **alphabet, int classes)
@@ -429,8 +778,10 @@ void copy_image_into(image src, image dest)
 
 image copy_image(image p)
 {
-    image copy = p;
+    image copy = p; //make_image(p.h,p.w,p.c);
+    //printf("copying h:%d, w:%d, c:%d, size: %d\n",p.h,p.w,p.c,sizeof(float));
     copy.data = calloc(p.h*p.w*p.c, sizeof(float));
+    //printf("memcpy %x to %x\n",p.data,copy.data);
     memcpy(copy.data, p.data, p.h*p.w*p.c*sizeof(float));
     return copy;
 }
@@ -578,6 +929,24 @@ int fill_image_from_stream(CvCapture *cap, image im)
     ipl_into_image(src, im);
     rgbgr_image(im);
     return 1;
+}
+
+void save_raw_jpg(uint8_t *img, const char *name)
+{
+    char buff[256];
+    sprintf(buff, "%s.jpg", name);
+
+    IplImage *disp = cvCreateImage(cvSize(480,270), IPL_DEPTH_8U, 3);
+    //disp->imageData = (unsigned char*)img;
+	int i;
+	for(i = 0; i < 480*270*3; i+=3){
+		disp->imageData[i+0] = img[i+2]; 
+		disp->imageData[i+1] = img[i+1];
+		disp->imageData[i+2] = img[i+0];
+	}
+    cvSaveImage(buff, disp,0);
+    cvReleaseImage(&disp);
+    //free_image(copy);
 }
 
 void save_image_jpg(image p, const char *name)
@@ -870,6 +1239,7 @@ void letterbox_image_into(image im, int w, int h, image boxed)
 
 image letterbox_image(image im, int w, int h)
 {
+printf("image w: %d, h: %d .. net.w: %d, net.h: %d\n",im.w,im.h,w,h);
     int new_w = im.w;
     int new_h = im.h;
     if (((float)w/im.w) < ((float)h/im.h)) {
@@ -941,8 +1311,8 @@ augment_args random_augment_args(image im, float angle, float aspect, int low, i
 
     float dx = (im.w*scale/aspect - w) / 2.;
     float dy = (im.h*scale - w) / 2.;
-    //if(dx < 0) dx = 0;
-    //if(dy < 0) dy = 0;
+    if(dx < 0) dx = 0;
+    if(dy < 0) dy = 0;
     dx = rand_uniform(-dx, dx);
     dy = rand_uniform(-dy, dy);
 
@@ -1427,13 +1797,10 @@ float get_pixel(image m, int x, int y, int c)
 }
 float get_pixel_extend(image m, int x, int y, int c)
 {
-    if(x < 0 || x >= m.w || y < 0 || y >= m.h) return 0;
-    /*
     if(x < 0) x = 0;
     if(x >= m.w) x = m.w-1;
     if(y < 0) y = 0;
     if(y >= m.h) y = m.h-1;
-    */
     if(c < 0 || c >= m.c) return 0;
     return get_pixel(m, x, y, c);
 }
