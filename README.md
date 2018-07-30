@@ -12,7 +12,8 @@ It also had a feature to play the minions banana song when a banana showed up in
 *( My kids loved that feature :smile: )*<br><br>
 All this where set up on a p2xlarge **EC2** GPU instance in the **AWS** cloud.
 <br><br>
-![some snapshot from 2017](cvdemo.png)
-<br>
 The darknet files included are those I identified where changed. <br>
-Changes I made to make it take raw piped image input and output json data including captions, bounding boxes for predictions and image data.
+Changes I made to make it take raw piped image input and output json data including captions, bounding boxes for predictions and image data.<br><br>
+<img alt="some snapshot from 2017" src="cvdemo.png" width=500/>
+<img alt="some snapshot from 2017" src="cvdemo2.jpg" width=500/>
+
